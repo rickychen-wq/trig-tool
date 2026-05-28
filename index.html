@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>三角函數</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07070d;
+  --surface: #0e0e1a;
+  --surface2: #13131f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --c: #5eead4;
+  --cp: #a78bfa;
+  --cr: #fb7185;
+  --cy: #fbbf24;
+  --text: #f0f0ff;
+  --muted: rgba(240,240,255,0.35);
+  --muted2: rgba(240,240,255,0.55);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* noise overlay */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9999;
+  opacity:0.5;
+}
+
+/* glow orbs */
+.orb1, .orb2 {
+  position:fixed;
+  border-radius:50%;
+  filter:blur(80px);
+  pointer-events:none;
+  z-index:0;
+}
+.orb1 { width:400px;height:400px;background:rgba(94,234,212,0.06);top:-100px;right:-100px; }
+.orb2 { width:350px;height:350px;background:rgba(167,139,250,0.06);bottom:-50px;left:-80px; }
+
+.wrap {
+  position:relative;
+  z-index:1;
+  max-width:560px;
+  margin:0 auto;
+  padding:32px 16px 60px;
+}
+
+/* ── HEADER ── */
+.hdr {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:32px;
+}
+.hdr-title {
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.1rem;
+  font-weight:700;
+  letter-spacing:3px;
+  color: var(--c);
+}
+.hdr-sub {
+  font-size:0.7rem;
+  color:var(--muted);
+  letter-spacing:1px;
+  margin-top:2px;
+}
+.hdr-badge {
+  padding:6px 12px;
+  background:rgba(94,234,212,0.08);
+  border:1px solid rgba(94,234,212,0.2);
+  border-radius:20px;
+  font-size:0.65rem;
+  color:var(--c);
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:1px;
+}
+
+/* ── CARD ── */
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.card-top {
+  height:2px;
+  background:linear-gradient(90deg, var(--c), var(--cp), var(--cr));
+}
+
+/* ── CALCULATOR ── */
+.calc-wrap { padding:20px; }
+
+.func-tabs {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:6px;
+  margin-bottom:16px;
+  background:rgba(0,0,0,0.3);
+  padding:5px;
+  border-radius:14px;
+  border:1px solid var(--border);
+}
+.ftab {
+  padding:11px 0;
+  background:transparent;
+  border:none;
+  border-radius:10px;
+  color:var(--muted2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:1rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.25s;
+  letter-spacing:1px;
+}
+.ftab.sin.active { background:rgba(94,234,212,0.12); color:var(--c); box-shadow:0 0 16px rgba(94,234,212,0.15); }
+.ftab.cos.active { background:rgba(167,139,250,0.12); color:var(--cp); box-shadow:0 0 16px rgba(167,139,250,0.15); }
+.ftab.tan.active { background:rgba(251,113,133,0.12); color:var(--cr); box-shadow:0 0 16px rgba(251,113,133,0.15); }
+.ftab:hover:not(.active) { color:var(--text); background:rgba(255,255,255,0.05); }
+
+.inp {
+  width:100%;
+  background:rgba(0,0,0,0.35);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  padding:14px 16px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.2rem;
+  outline:none;
+  transition:all 0.25s;
+  margin-bottom:10px;
+}
+.inp:focus { border-color:var(--c); box-shadow:0 0 0 3px rgba(94,234,212,0.08); }
+.inp::placeholder { color:var(--muted); font-size:0.8rem; font-family:'Space Grotesk',sans-serif; }
+
+.btn {
+  width:100%;
+  padding:14px;
+  background:linear-gradient(135deg, var(--c), var(--cp));
+  border:none;
+  border-radius:12px;
+  color:#07070d;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.9rem;
+  font-weight:700;
+  letter-spacing:1px;
+  cursor:pointer;
+  transition:all 0.25s;
+}
+.btn:hover { opacity:0.9; transform:translateY(-1px); }
+.btn:active { transform:translateY(0); opacity:1; }
+
+/* result */
+.result {
+  margin-top:12px;
+  padding:18px;
+  background:rgba(0,0,0,0.3);
+  border:1px solid var(--border);
+  border-radius:14px;
+  text-align:center;
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.3s;
+}
+.result.lit { border-color:rgba(94,234,212,0.25); box-shadow:0 0 24px rgba(94,234,212,0.08); }
+.r-label { font-size:0.65rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+.r-val {
+  font-family:'JetBrains Mono',monospace;
+  font-size:2rem;
+  font-weight:700;
+  color:var(--c);
+  line-height:1;
+}
+.r-exact { font-size:0.85rem; color:var(--cp); margin-top:8px; font-family:'JetBrains Mono',monospace; }
+.r-hint { font-size:0.7rem; color:var(--cy); margin-top:6px; letter-spacing:1px; }
+.r-empty { color:var(--muted); font-size:0.8rem; letter-spacing:1px; }
+
+@keyframes pop {
+  0%{transform:scale(0.95);opacity:0.5}
+  60%{transform:scale(1.02)}
+  100%{transform:scale(1);opacity:1}
+}
+.pop { animation:pop 0.3s ease; }
+
+/* ── SECTION LABEL ── */
+.sec-label {
+  font-size:0.65rem;
+  letter-spacing:3px;
+  color:var(--muted);
+  text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;
+  padding:0 4px;
+  margin:20px 0 8px;
+}
+
+/* ── ANGLE TABLE ── */
+.tbl-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+thead tr { border-bottom:1px solid var(--border2); }
+th {
+  padding:10px 8px;
+  font-size:0.65rem;
+  letter-spacing:2px;
+  color:var(--muted);
+  text-transform:uppercase;
+  font-weight:500;
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+}
+td {
+  padding:10px 8px;
+  text-align:center;
+  font-size:0.8rem;
+  border-top:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;
+  color:var(--muted2);
+  transition:all 0.2s;
+}
+tr:hover td { color:var(--text); background:rgba(255,255,255,0.02); }
+td:first-child { color:var(--c); font-weight:700; font-size:0.85rem; }
+.sp td:first-child { color:var(--cr); }
+.sp td { color:rgba(251,113,133,0.7); }
+.sp:hover td { color:var(--cr); }
+
+/* ── FORMULA GROUPS ── */
+.fgroup { margin-bottom:8px; }
+.fgroup-hdr {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 18px;
+  cursor:pointer;
+  user-select:none;
+  transition:background 0.2s;
+  border-radius:0;
+}
+.fgroup-hdr:hover { background:rgba(255,255,255,0.02); }
+.fgroup:first-child .fgroup-hdr { border-radius:18px 18px 0 0; }
+
+.pip {
+  width:6px; height:6px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.pip-c { background:var(--c); box-shadow:0 0 8px var(--c); }
+.pip-p { background:var(--cp); box-shadow:0 0 8px var(--cp); }
+.pip-r { background:var(--cr); box-shadow:0 0 8px var(--cr); }
+.pip-y { background:var(--cy); box-shadow:0 0 8px var(--cy); }
+
+.fgroup-name {
+  flex:1;
+  font-size:0.8rem;
+  font-weight:600;
+  letter-spacing:1px;
+  color:var(--text);
+}
+.fgroup-arrow {
+  color:var(--muted);
+  font-size:0.7rem;
+  transition:transform 0.3s;
+  font-family:'JetBrains Mono',monospace;
+}
+.fgroup.open .fgroup-arrow { transform:rotate(180deg); }
+
+.fgroup-body {
+  display:none;
+  padding:0 18px 16px;
+  border-top:1px solid var(--border);
+}
+.fgroup.open .fgroup-body { display:block; }
+
+.fitem {
+  padding:11px 0;
+  border-bottom:1px solid var(--border);
+}
+.fitem:last-child { border-bottom:none; }
+.fname {
+  font-size:0.6rem;
+  color:var(--muted);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+.fmath {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.88rem;
+  color:var(--muted2);
+  line-height:1.8;
+}
+.fmath .a { color:var(--c); }
+.fmath .b { color:var(--cp); }
+.fmath .r { color:var(--cr); }
+.fmath .y { color:var(--cy); }
+
+/* divider between cards in formula section */
+.fgroup + .fgroup { border-top:1px solid var(--border); }
+
+.footer {
+  text-align:center;
+  margin-top:40px;
+  font-size:0.65rem;
+  color:var(--muted);
+  letter-spacing:2px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* fade in */
+@keyframes fadeUp {
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.card { animation:fadeUp 0.5s ease both; }
+.card:nth-child(1){animation-delay:0s}
+.card:nth-child(2){animation-delay:0.08s}
+.card:nth-child(3){animation-delay:0.14s}
+.card:nth-child(4){animation-delay:0.2s}
+</style>
+</head>
+<body>
+<div class="orb1"></div>
+<div class="orb2"></div>
+<div class="wrap">
+
+  <!-- header -->
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">TRIG.TOOL</div>
+      <div class="hdr-sub">三角函數速查</div>
+    </div>
+    <div class="hdr-badge">v2.0</div>
+  </div>
+
+  <!-- calculator -->
+  <div class="card">
+    <div class="card-top"></div>
+    <div class="calc-wrap">
+      <div class="func-tabs">
+        <button class="ftab sin active" onclick="setFunc('sin',this)">sin</button>
+        <button class="ftab cos" onclick="setFunc('cos',this)">cos</button>
+        <button class="ftab tan" onclick="setFunc('tan',this)">tan</button>
+      </div>
+      <input class="inp" id="inp" type="number" placeholder="輸入角度，例如 45" onkeydown="if(event.key==='Enter')calc()">
+      <button class="btn" onclick="calc()">計 算</button>
+      <div class="result" id="res"><span class="r-empty">輸入角度後按計算</span></div>
+    </div>
+  </div>
+
+  <!-- angle table -->
+  <div class="sec-label">特殊角速查</div>
+  <div class="card">
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>角</th><th>sin</th><th>cos</th><th>tan</th></tr></thead>
+        <tbody>
+          <tr><td>0°</td><td>0</td><td>1</td><td>0</td></tr>
+          <tr><td>30°</td><td>1/2</td><td>√3/2</td><td>1/√3</td></tr>
+          <tr><td>45°</td><td>√2/2</td><td>√2/2</td><td>1</td></tr>
+          <tr><td>60°</td><td>√3/2</td><td>1/2</td><td>√3</td></tr>
+          <tr><td>90°</td><td>1</td><td>0</td><td>—</td></tr>
+          <tr><td>120°</td><td>√3/2</td><td>-1/2</td><td>-√3</td></tr>
+          <tr><td>135°</td><td>√2/2</td><td>-√2/2</td><td>-1</td></tr>
+          <tr><td>150°</td><td>1/2</td><td>-√3/2</td><td>-1/√3</td></tr>
+          <tr><td>180°</td><td>0</td><td>-1</td><td>0</td></tr>
+          <tr class="sp"><td>15°</td><td>(√6-√2)/4</td><td>(√6+√2)/4</td><td>2-√3</td></tr>
+          <tr class="sp"><td>18°</td><td>(√5-1)/4</td><td>√(10+2√5)/4</td><td>—</td></tr>
+          <tr class="sp"><td>22.5°</td><td>√(2-√2)/2</td><td>√(2+√2)/2</td><td>√2-1</td></tr>
+          <tr class="sp"><td>75°</td><td>(√6+√2)/4</td><td>(√6-√2)/4</td><td>2+√3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- formulas -->
+  <div class="sec-label">公式庫</div>
+  <div class="card">
+    <!-- basic -->
+    <div class="fgroup open">
+      <div class="fgroup-hdr" onclick="tog(this)">
+        <span class="pip pip-c"></span>
+        <span class="fgroup-name">基本公式</span>
+        <span class="fgroup-arrow">▾</span>
+      </div>
+      <div class="fgroup-body">
+        <div class="fitem">
+          <div class="fname">平方關係</div>
+          <div class="fmath"><span class="a">sin²θ + cos²θ = 1</span></div>
+        </div>
+        <div class="fitem">
+          <div class="fname">商數關係</div>
+          <div class="fmath"><span class="a">tan θ = sin θ / cos θ</span></div>
+        </div>
+        <div class="fitem">
+          <div class="fname">互餘</div>
+          <div class="fmath">
+            <span class="a">sin(90°-θ) = cos θ</span><br>
+            <span class="a">cos(90°-θ) = sin θ</span>
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="fname">導出</div>
+          <div class="fmath"><span class="a">cos²θ = 1 / (1 + tan²θ)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- sum/diff -->
+    <div class="fgroup open">
+      <div class="fgroup-hdr" onclick="tog(this)">
+        <span class="pip pip-p"></span>
+        <span class="fgroup-name">和差角公式</span>
+        <span class="fgroup-arrow">▾</span>
+      </div>
+      <div class="fgroup-body">
+        <div class="fitem">
+          <div class="fname">sin</div>
+          <div class="fmath">
+            <span class="b">sin(A+B)</span> = sinA cosB <span class="a">+</span> cosA sinB<br>
+            <span class="b">sin(A-B)</span> = sinA cosB <span class="r">-</span> cosA sinB
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="fname">cos</div>
+          <div class="fmath">
+            <span class="b">cos(A+B)</span> = cosA cosB <span class="r">-</span> sinA sinB<br>
+            <span class="b">cos(A-B)</span> = cosA cosB <span class="a">+</span> sinA sinB
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="fname">tan</div>
+          <div class="fmath">
+            <span class="b">tan(A+B)</span> = (tanA + tanB) / (1 - tanA·tanB)<br>
+            <span class="b">tan(A-B)</span> = (tanA - tanB) / (1 + tanA·tanB)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- double angle -->
+    <div class="fgroup open">
+      <div class="fgroup-hdr" onclick="tog(this)">
+        <span class="pip pip-r"></span>
+        <span class="fgroup-name">倍角公式</span>
+        <span class="fgroup-arrow">▾</span>
+      </div>
+      <div class="fgroup-body">
+        <div class="fitem">
+          <div class="fname">sin</div>
+          <div class="fmath"><span class="r">sin(2θ)</span> = 2 sinθ cosθ</div>
+        </div>
+        <div class="fitem">
+          <div class="fname">cos（三種）</div>
+          <div class="fmath">
+            <span class="r">cos(2θ)</span> = cos²θ - sin²θ<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 2cos²θ - 1<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 1 - 2sin²θ
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="fname">tan</div>
+          <div class="fmath"><span class="r">tan(2θ)</span> = 2tanθ / (1 - tan²θ)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- half angle -->
+    <div class="fgroup">
+      <div class="fgroup-hdr" onclick="tog(this)">
+        <span class="pip pip-y"></span>
+        <span class="fgroup-name">半角公式（進階）</span>
+        <span class="fgroup-arrow">▾</span>
+      </div>
+      <div class="fgroup-body">
+        <div class="fitem">
+          <div class="fname">sin / cos</div>
+          <div class="fmath">
+            <span class="y">sin(θ/2)</span> = ±√((1 - cosθ) / 2)<br>
+            <span class="y">cos(θ/2)</span> = ±√((1 + cosθ) / 2)
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="fname">tan</div>
+          <div class="fmath">
+            <span class="y">tan(θ/2)</span> = sinθ / (1 + cosθ)<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= (1 - cosθ) / sinθ
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">TRIG.TOOL · FOR CHEN</div>
+</div>
+
+<script>
+let fn = 'sin';
+
+const EX = {
+  sin: {'0':'0','15':'(√6-√2)/4','18':'(√5-1)/4','22.5':'√(2-√2)/2','30':'1/2','45':'√2/2','60':'√3/2','75':'(√6+√2)/4','90':'1','120':'√3/2','135':'√2/2','150':'1/2','180':'0','210':'-1/2','225':'-√2/2','240':'-√3/2','270':'-1','300':'-√3/2','315':'-√2/2','330':'-1/2','360':'0'},
+  cos: {'0':'1','15':'(√6+√2)/4','18':'√(10+2√5)/4','22.5':'√(2+√2)/2','30':'√3/2','45':'√2/2','60':'1/2','75':'(√6-√2)/4','90':'0','120':'-1/2','135':'-√2/2','150':'-√3/2','180':'-1','210':'-√3/2','225':'-√2/2','240':'-1/2','270':'0','300':'1/2','315':'√2/2','330':'√3/2','360':'1'},
+  tan: {'0':'0','15':'2-√3','22.5':'√2-1','30':'1/√3','45':'1','60':'√3','75':'2+√3','90':'不存在','120':'-√3','135':'-1','150':'-1/√3','180':'0','210':'1/√3','225':'1','240':'√3','270':'不存在','300':'-√3','315':'-1','330':'-1/√3','360':'0'}
+};
+
+function setFunc(f, btn) {
+  fn = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getExact(norm, raw) {
+  const map = EX[fn];
+  const keys = [String(norm), String(raw), String(Math.round(norm)), String(Math.round(raw)), String(parseFloat(norm.toFixed(1))), String(parseFloat(raw.toFixed(1)))];
+  for (const k of keys) if (map[k] !== undefined) return map[k];
+  return null;
+}
+
+function calc() {
+  const v = document.getElementById('inp').value.trim();
+  const res = document.getElementById('res');
+  if (!v) { res.className='result'; res.innerHTML='<span class="r-empty">輸入角度後按計算</span>'; return; }
+
+  const ang = parseFloat(v);
+  if (isNaN(ang)) { res.innerHTML='<span class="r-empty" style="color:var(--cr)">請輸入數字</span>'; return; }
+
+  const rad = ang * Math.PI / 180;
+  const norm = ((ang % 360) + 360) % 360;
+
+  // tan undefined
+  if (fn === 'tan' && (Math.abs(norm-90)<0.001 || Math.abs(norm-270)<0.001)) {
+    res.className='result lit pop';
+    res.innerHTML=`<div><div class="r-label">${fn}(${ang}°)</div><div class="r-val" style="color:var(--cr)">不存在</div><div class="r-hint">90° / 270° 無定義</div></div>`;
+    return;
+  }
+
+  let val = fn==='sin' ? Math.sin(rad) : fn==='cos' ? Math.cos(rad) : Math.tan(rad);
+  if (Math.abs(val) < 1e-10) val = 0;
+  if (Math.abs(val-1) < 1e-10) val = 1;
+  if (Math.abs(val+1) < 1e-10) val = -1;
+
+  const numStr = Math.abs(val) > 999 ? '∞ (極大)' : val.toFixed(6);
+  const exact = getExact(norm, ang);
+  const isSpecial = [0,15,18,22.5,30,45,60,75,90,120,135,150,180].includes(norm) || [0,15,18,22.5,30,45,60,75,90,120,135,150,180].includes(ang);
+
+  res.className = 'result lit';
+  void res.offsetWidth;
+  res.classList.add('pop');
+  res.innerHTML = `
+    <div>
+      <div class="r-label">${fn}(${ang}°) =</div>
+      <div class="r-val">${numStr}</div>
+      ${exact ? `<div class="r-exact">精確值：${exact}</div>` : ''}
+      ${isSpecial && !exact ? '<div class="r-hint">無標準精確值</div>' : ''}
+    </div>`;
+}
+
+function tog(hdr) {
+  hdr.parentElement.classList.toggle('open');
+}
+</script>
+</body>
+</html>
